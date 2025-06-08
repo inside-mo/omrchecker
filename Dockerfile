@@ -1,6 +1,6 @@
 FROM python:3.9-slim
 
-# Install required system dependencies for OpenCV and X11
+# Install required system dependencies with complete X11 support
 RUN apt-get update && apt-get install -y \
     git \
     build-essential \
@@ -9,9 +9,12 @@ RUN apt-get update && apt-get install -y \
     libsm6 \
     libxext6 \
     libxrender-dev \
+    libxrandr2 \
+    libxinerama1 \
+    libxcursor1 \
+    libxi6 \
     xvfb \
     x11-utils \
-    libxrandr2 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -34,7 +37,7 @@ COPY app.py /app/OMRChecker/
 # Expose port 2014 as specified
 EXPOSE 2014
 
-# Use xvfb-run to handle the virtual display
+# Use xvfb-run to handle the virtual display properly
 ENTRYPOINT ["xvfb-run", "-s", "-screen 0 1920x1080x16"]
 
 # Run our application from the OMRChecker directory
