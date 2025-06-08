@@ -7,7 +7,7 @@ from pathlib import Path
 print("OMRChecker service is running on port 2014!")
 
 def main():
-    # Example of using the new API:
+    # Example of using the new API (commented out)
     # args = {"setLayout": False, "debug": True,
     #         "input_paths": ["sample_input"], "output_dir": "output"}
     # entry_point(Path("sample_input"), args)
