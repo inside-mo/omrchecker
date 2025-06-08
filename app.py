@@ -5,9 +5,9 @@ import traceback
 from flask import Flask, request, jsonify, render_template_string
 from pathlib import Path
 import base64
-
-# For PDF to images
 from pdf2image import convert_from_bytes
+import logging
+logging.basicConfig(level=logging.INFO)
 
 # Make sure we can import src.entry from OMRChecker
 sys.path.insert(0, "/app/OMRChecker")
