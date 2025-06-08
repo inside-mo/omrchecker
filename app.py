@@ -6,6 +6,11 @@ from flask import Flask, request, jsonify, render_template_string
 from pathlib import Path
 import base64
 
+# Make sure we can import src.entry from OMRChecker
+sys.path.insert(0, "/app/OMRChecker")
+
+print("==== APP.PY STARTED ====", flush=True)
+
 app = Flask(__name__)
 
 # Set up Python logging to stdout (so Coolify sees it)
@@ -47,6 +52,7 @@ HTML_TEMPLATE = """
             <!-- Results will be displayed here -->
         </div>
     </div>
+
     <script>
         document.getElementById('uploadForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -94,11 +100,10 @@ def process_omr():
     try:
         from src.entry import entry_point
 
-        # Set up working directories
+        # Make sure temp directories exist
         template_dir = Path("/tmp/template")
         img_dir = Path("/tmp/images")
         out_dir = Path("/tmp/output")
-
         for d in [template_dir, img_dir, out_dir]:
             d.mkdir(parents=True, exist_ok=True)
 
@@ -114,7 +119,6 @@ def process_omr():
             file_path = img_dir / file.filename
             file.save(str(file_path))
 
-        # Set up OMRChecker args
         args = {
             "setLayout": False,
             "debug": True,
@@ -122,10 +126,8 @@ def process_omr():
             "output_dir": str(out_dir)
         }
 
-        # Process images using OMRChecker entry point
         result = entry_point(img_dir, args)
 
-        # Collect output images for display
         processed_images = []
         if out_dir.exists():
             for img_file in out_dir.glob("*.jpg"):
@@ -141,11 +143,8 @@ def process_omr():
         })
 
     except Exception as e:
-        app.logger.error(traceback.format_exc())
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == "__main__":
     print("Starting OMRChecker Web Interface on port 2014", flush=True)
