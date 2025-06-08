@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     xvfb \
     x11-utils \
     poppler-utils \
+    tini \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
