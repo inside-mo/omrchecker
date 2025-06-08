@@ -19,6 +19,9 @@ RUN git clone https://github.com/Udayraj123/OMRChecker.git /app/OMRChecker
 # Fix the import in __init__.py
 RUN sed -i 's/from src.logger import logger/from .logger import logger/g' /app/OMRChecker/src/__init__.py
 
+# Patch the interaction.py file to handle missing monitor
+RUN sed -i 's/monitor_window = get_monitors\(\)\[0\]/try:\n    monitor_window = get_monitors()[0]\nexcept Exception:\n    from types import SimpleNamespace\n    monitor_window = SimpleNamespace(width=1920, height=1080)/' /app/OMRChecker/src/utils/interaction.py
+
 # Install base dependencies
 RUN pip install --no-cache-dir "numpy<2.0"
 RUN pip install --no-cache-dir opencv-python-headless==4.6.0.66
