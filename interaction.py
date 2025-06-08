@@ -1,29 +1,33 @@
-FROM python:3.10-slim
+import os
+import sys
 
-WORKDIR /app
+# Add current directory to Python path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Install git and X11 dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+from OMRChecker.src.processor import ProcessOMR
 
-# Clone OMRChecker
-RUN git clone https://github.com/Udayraj123/OMRChecker.git
+class OMRProcessor:
+    def __init__(self, template_path=None):
+        self.processor = None
+        if template_path:
+            self.load_template(template_path)
+    
+    def load_template(self, template_path):
+        """Load an OMR template configuration"""
+        self.processor = ProcessOMR(template_path)
+        return True
+        
+    def process_image(self, image_path):
+        """Process an OMR sheet image"""
+        if not self.processor:
+            return {"success": False, "error": "Template not loaded"}
+            
+        try:
+            result = self.processor.process(image_path)
+            return {"success": True, "data": result}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
 
-# Create patched version of interaction.py
-RUN echo 'class InteractionUtils:\n    @staticmethod\n    def get_window_size():\n        return (1920, 1080)  # Default resolution\n' > /app/OMRChecker/src/utils/interaction.py
-
-# Copy our files
-COPY requirements.txt .
-COPY app.py .
-
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Add OMRChecker to Python path
-ENV PYTHONPATH="${PYTHONPATH}:/app/OMRChecker"
-
-ENV PORT=2014
-EXPOSE 2014
-
-CMD ["python", "app.py"]
+# Example usage
+if __name__ == "__main__":
+    print("OMR Interaction module - import this in your application")
