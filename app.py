@@ -2,7 +2,8 @@ from flask import Flask, request, jsonify
 import os
 from functools import wraps
 import tempfile
-from OMRChecker.src.processor import ProcessOMR  # Fixed import path
+import shutil
+from src.processor import ProcessOMR  # Direct import like in main.py
 
 app = Flask(__name__)
 API_KEY = os.environ.get('API_KEY')
@@ -31,25 +32,27 @@ def process_omr():
     template = request.form.get('template', 'default')
     file = request.files['file']
     
-    # Save uploaded file temporarily
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_file:
-        file.save(temp_file.name)
-        try:
-            # Process with OMRChecker using the selected template
-            processor = ProcessOMR()
-            results = processor.process_path(temp_file.name, template)
-            return jsonify({
-                'success': True,
-                'results': results
-            })
-        except Exception as e:
-            return jsonify({
-                'success': False,
-                'error': str(e)
-            }), 500
-        finally:
-            # Clean up temp file
-            os.unlink(temp_file.name)
+    # Save uploaded file to inputs directory
+    input_path = os.path.join('inputs', file.filename)
+    file.save(input_path)
+    
+    try:
+        # Process with OMRChecker
+        processor = ProcessOMR()
+        results = processor.process_path(input_path, template)
+        return jsonify({
+            'success': True,
+            'results': results
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+    finally:
+        # Clean up
+        if os.path.exists(input_path):
+            os.remove(input_path)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=2014)
