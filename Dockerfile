@@ -6,10 +6,14 @@ RUN apt-get update && apt-get install -y git && apt-get clean
 # Create app directory
 WORKDIR /app
 
-# Clone the repository
+# Clone the repository (either current version or pin to older version)
+# Option 1: Latest version (using new API)
 RUN git clone https://github.com/Udayraj123/OMRChecker.git /app/OMRChecker
 
-# Fix the problematic import
+# Option 2: Pin to older version with ProcessOMR (uncomment if preferred)
+# RUN git clone --depth 1 --branch 2f828e4 https://github.com/Udayraj123/OMRChecker.git /app/OMRChecker
+
+# Fix the import in __init__.py
 RUN sed -i 's/from src.logger import logger/from .logger import logger/g' /app/OMRChecker/src/__init__.py
 
 # Install dependencies
