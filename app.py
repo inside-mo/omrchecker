@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import os
 from functools import wraps
 import tempfile
-from src.processor import ProcessOMR
+from OMRChecker.src.processor import ProcessOMR  # Fixed import path
 
 app = Flask(__name__)
 API_KEY = os.environ.get('API_KEY')
