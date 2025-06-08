@@ -5,21 +5,16 @@ WORKDIR /app
 # Install git and required dependencies
 RUN apt-get update && apt-get install -y git && apt-get clean
 
-# Clone the original OMRChecker repo
-RUN git clone https://github.com/Udayraj123/OMRChecker.git
+# Clone the original OMRChecker repo directly to our workdir
+RUN git clone https://github.com/Udayraj123/OMRChecker.git /app
 
-# Install all requirements from the original repo
-RUN pip install --no-cache-dir -r /app/OMRChecker/requirements.txt
+# Install all dependencies from the original repo
+RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir rich>=10.0.0 flask>=2.0.0
 
-# Create a symbolic link to make the imports work
-RUN ln -s /app/OMRChecker/src /app/src
-
-# Copy your application files
-COPY . .
-
-# Set Python path correctly
-ENV PYTHONPATH="${PYTHONPATH}:/app:/app/OMRChecker"
+# Copy our custom application files
+COPY app.py /app/
+COPY interaction.py /app/
 
 # Expose port 8000 to match Coolify's default
 EXPOSE 8000
