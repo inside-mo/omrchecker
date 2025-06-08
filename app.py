@@ -47,7 +47,6 @@ HTML_TEMPLATE = """
             <!-- Results will be displayed here -->
         </div>
     </div>
-
     <script>
         document.getElementById('uploadForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -76,4 +75,78 @@ HTML_TEMPLATE = """
                     });
                 }
             })
-            .catch(erro
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('results').innerHTML = `<h2>Error</h2><p>${error}</p>`;
+            });
+        });
+    </script>
+</body>
+</html>
+"""
+
+@app.route('/')
+def index():
+    return render_template_string(HTML_TEMPLATE)
+
+@app.route('/process', methods=['POST'])
+def process_omr():
+    try:
+        from src.entry import entry_point
+
+        # Set up working directories
+        template_dir = Path("/tmp/template")
+        img_dir = Path("/tmp/images")
+        out_dir = Path("/tmp/output")
+
+        for d in [template_dir, img_dir, out_dir]:
+            d.mkdir(parents=True, exist_ok=True)
+
+        # Save uploaded template files
+        template_files = request.files.getlist('template_files')
+        for file in template_files:
+            file_path = template_dir / file.filename
+            file.save(str(file_path))
+
+        # Save uploaded image files
+        image_files = request.files.getlist('image_files')
+        for file in image_files:
+            file_path = img_dir / file.filename
+            file.save(str(file_path))
+
+        # Set up OMRChecker args
+        args = {
+            "setLayout": False,
+            "debug": True,
+            "input_paths": [str(img_dir)],
+            "output_dir": str(out_dir)
+        }
+
+        # Process images using OMRChecker entry point
+        result = entry_point(img_dir, args)
+
+        # Collect output images for display
+        processed_images = []
+        if out_dir.exists():
+            for img_file in out_dir.glob("*.jpg"):
+                with open(img_file, "rb") as f:
+                    img_data = base64.b64encode(f.read()).decode('utf-8')
+                    processed_images.append(img_data)
+
+        return jsonify({
+            "success": True,
+            "message": "OMR processing completed",
+            "results": result if result else {},
+            "images": processed_images
+        })
+
+    except Exception as e:
+        app.logger.error(traceback.format_exc())
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+if __name__ == "__main__":
+    print("Starting OMRChecker Web Interface on port 2014", flush=True)
+    app.run(host="0.0.0.0", port=2014, debug=True)
