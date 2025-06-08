@@ -1,0 +1,13 @@
+--- /app/OMRChecker/src/utils/interaction.py.orig
++++ /app/OMRChecker/src/utils/interaction.py
+@@ -1,12 +1,9 @@
+ import cv2
+ import numpy as np
+-from screeninfo import get_monitors
+ from src.logger import logger
+ 
+ # window dimensions
+-monitor_window = get_monitors()[0]
+-WINDOW_WIDTH = int(monitor_window.width * 0.7)
+-WINDOW_HEIGHT = int(monitor_window.height * 0.7)
++WINDOW_WIDTH, WINDOW_HEIGHT = 1024, 768  # Default size
