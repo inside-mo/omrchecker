@@ -1,6 +1,6 @@
 FROM python:3.9-slim
 
-# Install required system dependencies for OpenCV
+# Install required system dependencies for OpenCV and X11
 RUN apt-get update && apt-get install -y \
     git \
     build-essential \
@@ -9,6 +9,9 @@ RUN apt-get update && apt-get install -y \
     libsm6 \
     libxext6 \
     libxrender-dev \
+    xvfb \
+    x11-utils \
+    libxrandr2 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -19,25 +22,20 @@ RUN git clone https://github.com/Udayraj123/OMRChecker.git /app/OMRChecker
 # Fix the import in __init__.py
 RUN sed -i 's/from src.logger import logger/from .logger import logger/g' /app/OMRChecker/src/__init__.py
 
-# Patch the interaction.py file to handle missing monitor
-RUN sed -i 's/monitor_window = get_monitors\(\)\[0\]/try:\n    monitor_window = get_monitors()[0]\nexcept Exception:\n    from types import SimpleNamespace\n    monitor_window = SimpleNamespace(width=1920, height=1080)/' /app/OMRChecker/src/utils/interaction.py
+# Install upstream dependencies first, then add extras
+RUN pip install --no-cache-dir -r /app/OMRChecker/requirements.txt \
+    && pip install --no-cache-dir \
+       numpy<2.0 opencv-python-headless==4.6.0.66 \
+       flask flask-cors
 
-# Install base dependencies
-RUN pip install --no-cache-dir "numpy<2.0"
-RUN pip install --no-cache-dir opencv-python-headless==4.6.0.66
-
-# Install all dependencies discovered through our testing
-RUN pip install --no-cache-dir pandas matplotlib
-RUN pip install --no-cache-dir Pillow PyPDF2
-RUN pip install --no-cache-dir pytz python-dateutil
-RUN pip install --no-cache-dir rich flask
-RUN pip install --no-cache-dir jsonschema dotmap deepmerge screeninfo
-
-# Copy our application files
+# Copy our application file
 COPY app.py /app/OMRChecker/
 
 # Expose port 2014 as specified
 EXPOSE 2014
+
+# Use xvfb-run to handle the virtual display
+ENTRYPOINT ["xvfb-run", "-s", "-screen 0 1920x1080x16"]
 
 # Run our application from the OMRChecker directory
 WORKDIR /app/OMRChecker
