@@ -76,3 +76,97 @@ HTML_TEMPLATE = """
             if (pdfFile) {
                 formData.append('pdf', pdfFile);
             }
+            fetch('/process', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = `<h2>Processing Results</h2><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                if(data.images && data.images.length > 0) {
+                    data.images.forEach(img => {
+                        const imgElement = document.createElement('img');
+                        imgElement.src = `data:image/jpeg;base64,${img}`;
+                        resultsDiv.appendChild(imgElement);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('results').innerHTML = `<h2>Error</h2><p>${error}</p>`;
+            });
+        });
+    </script>
+</body>
+</html>
+"""
+
+@app.route('/')
+def index():
+    return render_template_string(HTML_TEMPLATE)
+
+@app.route('/process', methods=['POST'])
+def process_omr():
+    try:
+        from src.entry import entry_point
+
+        template_dir = Path("/tmp/template")
+        img_dir = Path("/tmp/images")
+        out_dir = Path("/tmp/output")
+        for d in [template_dir, img_dir, out_dir]:
+            d.mkdir(parents=True, exist_ok=True)
+
+        # Save uploaded template files
+        template_files = request.files.getlist('template_files')
+        for file in template_files:
+            file_path = template_dir / file.filename
+            file.save(str(file_path))
+
+        # Save uploaded image files
+        image_files = request.files.getlist('image_files')
+        for file in image_files:
+            file_path = img_dir / file.filename
+            file.save(str(file_path))
+
+        # Handle PDF upload and conversion
+        pdf_file = request.files.get('pdf')
+        if pdf_file:
+            app.logger.info("PDF uploaded, converting to images…")
+            pdf_bytes = pdf_file.read()
+            images = convert_from_bytes(pdf_bytes, fmt='jpeg')
+            for idx, img in enumerate(images):
+                img_path = img_dir / f"pdf_page_{idx+1}.jpg"
+                img.save(str(img_path), 'JPEG')
+
+        args = {
+            "setLayout": False,
+            "debug": True,
+            "input_paths": [str(img_dir)],
+            "output_dir": str(out_dir)
+        }
+
+        app.logger.info(f"Calling entry_point with args: {args}")
+        result = entry_point(img_dir, args)
+
+        processed_images = []
+        if out_dir.exists():
+            for img_file in out_dir.glob("*.jpg"):
+                with open(img_file, "rb") as f:
+                    img_data = base64.b64encode(f.read()).decode('utf-8')
+                    processed_images.append(img_data)
+
+        return jsonify({
+            "success": True,
+            "message": "OMR processing completed",
+            "results": result if result else {},
+            "images": processed_images
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+if __name__ == "__main__":
+    print("Starting OMRChecker Web Interface on port 2014", flush=True)
+    app.run(host="0.0.0.0", port=2014, debug=True)
