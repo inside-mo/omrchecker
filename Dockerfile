@@ -43,4 +43,4 @@ EXPOSE 2014
 ENTRYPOINT ["xvfb-run", "-a", "-e", "/dev/stdout", "--server-args=-screen 0 1920x1080x16", "gunicorn", "-k", "sync", "--workers", "1", "-b", "0.0.0.0:2014", "app:app", "--access-logfile", "-", "--error-logfile", "-"]
 
 # For DEBUGGING ONLY: Switch to Flask dev server and get all logs to stdout:
-# ENTRYPOINT ["xvfb-run", "-a", "python", "-u", "app.py"]
+ENTRYPOINT ["xvfb-run", "-a", "python", "-u", "app.py"]
