@@ -2,12 +2,26 @@ import os
 import sys
 import logging
 import traceback
-from flask import Flask, request, jsonify, render_template_string
 from pathlib import Path
 import base64
+from flask import Flask, request, jsonify, render_template_string, send_file
+
+# --- Production-grade logging (call this early!) ---
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
+logger = logging.getLogger("omrchecker")
+
+# --- Matplotlib headless config (must set before pyplot import) ---
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import io
+
 from pdf2image import convert_from_bytes
-import logging
-logging.basicConfig(level=logging.INFO)
+
 
 # Make sure we can import src.entry from OMRChecker
 sys.path.insert(0, "/app/OMRChecker")
@@ -105,6 +119,15 @@ HTML_TEMPLATE = """
 </body>
 </html>
 """
+
+@app.route("/xvfb-test")
+def xvfb_test():
+    fig, ax = plt.subplots()
+    ax.plot([0, 1, 2], [0, 1, 0])
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png")
+    buf.seek(0)
+    return send_file(buf, mimetype="image/png")
 
 @app.route('/')
 def index():
