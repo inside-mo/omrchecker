@@ -6,13 +6,16 @@ from flask import Flask, request, jsonify, render_template_string
 from pathlib import Path
 import base64
 
-# Make src imports always work, even if not run from /app/OMRChecker
-sys.path.insert(0, "/app/OMRChecker")
+from pdf2image import convert_from_bytes
 
-# Set up robust logging for gunicorn/production (logs go to stdout)
-logging.basicConfig(level=logging.INFO, stream=sys.stdout,
-                    format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-logger = logging.getLogger("omrchecker_app")
+# Gunicorn production logging
+logger = logging.getLogger("gunicorn.error")
+if not logger.handlers:
+    # Fallback to stdout if not running with gunicorn
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+    logger = logging.getLogger()
+
+sys.path.insert(0, "/app/OMRChecker")
 
 app = Flask(__name__)
 
@@ -34,7 +37,7 @@ HTML_TEMPLATE = """
     <div class="container">
         <h1>OMRChecker Web Interface</h1>
         <div class="upload-form">
-            <h2>Upload OMR Template and Images</h2>
+            <h2>Upload OMR Template, Images, and PDFs</h2>
             <form id="uploadForm" enctype="multipart/form-data">
                 <div>
                     <label for="template">Template Directory:</label>
@@ -44,14 +47,15 @@ HTML_TEMPLATE = """
                     <label for="images">OMR Images:</label>
                     <input type="file" id="images" name="images" multiple>
                 </div>
+                <div style="margin-top: 10px;">
+                    <label for="pdfs">PDFs:</label>
+                    <input type="file" id="pdf" name="pdf_files" multiple accept="application/pdf">
+                </div>
                 <button type="submit" style="margin-top: 10px;">Process</button>
             </form>
         </div>
-        <div class="result-container" id="results">
-            <!-- Results will be displayed here -->
-        </div>
+        <div class="result-container" id="results"></div>
     </div>
-
     <script>
         document.getElementById('uploadForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -63,6 +67,10 @@ HTML_TEMPLATE = """
             const imageFiles = document.getElementById('images').files;
             for(let i = 0; i < imageFiles.length; i++) {
                 formData.append('image_files', imageFiles[i]);
+            }
+            const pdfFiles = document.getElementById('pdf').files;
+            for(let i = 0; i < pdfFiles.length; i++) {
+                formData.append('pdf_files', pdfFiles[i]);
             }
             fetch('/process', {
                 method: 'POST',
@@ -92,13 +100,11 @@ HTML_TEMPLATE = """
 
 @app.route('/')
 def index():
-    logger.info("Index page accessed")
     return render_template_string(HTML_TEMPLATE)
 
 @app.route('/process', methods=['POST'])
 def process_omr():
     try:
-        logger.info("Received POST /process request")
         from src.entry import entry_point
 
         template_dir = Path("/tmp/template")
@@ -107,17 +113,26 @@ def process_omr():
         for d in [template_dir, img_dir, out_dir]:
             d.mkdir(parents=True, exist_ok=True)
 
-        template_files = request.files.getlist('template_files')
-        for file in template_files:
+        # Save template files
+        for file in request.files.getlist('template_files'):
             file_path = template_dir / file.filename
             file.save(str(file_path))
-        logger.info(f"Saved {len(template_files)} template files")
 
-        image_files = request.files.getlist('image_files')
-        for file in image_files:
+        # Save image files
+        for file in request.files.getlist('image_files'):
             file_path = img_dir / file.filename
             file.save(str(file_path))
-        logger.info(f"Saved {len(image_files)} image files")
+
+        # Save and extract images from PDFs
+        for file in request.files.getlist('pdf_files'):
+            try:
+                pdf_images = convert_from_bytes(file.read())
+                for idx, img in enumerate(pdf_images):
+                    img_path = img_dir / f"{Path(file.filename).stem}_page{idx+1}.jpg"
+                    img.save(img_path, "JPEG")
+                    logger.info(f"Saved image extracted from PDF: {img_path}")
+            except Exception as ex:
+                logger.error(f"Failed to extract images from PDF {file.filename}: {ex}")
 
         args = {
             "setLayout": False,
@@ -127,7 +142,6 @@ def process_omr():
         }
 
         result = entry_point(img_dir, args)
-        logger.info("entry_point() finished")
 
         processed_images = []
         if out_dir.exists():
@@ -135,7 +149,6 @@ def process_omr():
                 with open(img_file, "rb") as f:
                     img_data = base64.b64encode(f.read()).decode('utf-8')
                     processed_images.append(img_data)
-        logger.info(f"Processed images: {len(processed_images)}")
 
         return jsonify({
             "success": True,
@@ -145,8 +158,9 @@ def process_omr():
         })
 
     except Exception as e:
-        logger.error(f"Exception in /process: {e}", exc_info=True)
+        logger.error("Exception in /process", exc_info=True)
         return jsonify({"success": False, "error": str(e)}), 500
 
-# No __main__ block needed (gunicorn runs the app)
-
+if __name__ == "__main__":
+    logger.info("Starting OMRChecker Web Interface on port 2014")
+    app.run(host="0.0.0.0", port=2014, debug=False)
