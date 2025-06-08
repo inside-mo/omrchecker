@@ -1,11 +1,13 @@
 import os
 import sys
 
-# Configure paths
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'OMRChecker'))
+# Add the current directory and the OMRChecker directory to the Python path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+sys.path.insert(0, os.path.join(current_dir, 'OMRChecker'))
 
-from OMRChecker.src.processor import ProcessOMR
+# Import the processor - note the changed import path
+from src.processor import ProcessOMR
 
 class OMRProcessor:
     def __init__(self, template_path=None):
