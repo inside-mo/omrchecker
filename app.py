@@ -1,9 +1,11 @@
-from flask import Flask, request, jsonify
+import sys
 import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from flask import Flask, request, jsonify
 from functools import wraps
 import tempfile
-import shutil
-from src.processor import ProcessOMR  # Direct import like in main.py
+from src.processor import ProcessOMR  # Direct import like they do in main.py
 
 app = Flask(__name__)
 API_KEY = os.environ.get('API_KEY')
