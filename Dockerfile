@@ -37,4 +37,4 @@ WORKDIR /app/OMRChecker
 EXPOSE 2014
 
 # Start Gunicorn (with Xvfb headless display if needed for OpenCV or similar)
-ENTRYPOINT ["xvfb-run", "--server-args=-screen 0 1920x1080x16", "gunicorn", "-b", "0.0.0.0:2014", "app:app", "--access-logfile", "-", "--error-logfile", "-"]
+ENTRYPOINT ["xvfb-run", "-a", "-e", "/dev/stdout", "--server-args=-screen 0 1920x1080x16", "gunicorn", "-b", "0.0.0.0:2014", "app:app", "--access-logfile", "-", "--error-logfile", "-"]
