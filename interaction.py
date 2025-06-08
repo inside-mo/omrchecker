@@ -1,11 +1,4 @@
-import os
-import sys
-
-# Explicitly add the OMRChecker directory to the path
-omr_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'omr')
-sys.path.insert(0, omr_dir)
-
-# Import from the src module
+# Running from the root of OMRChecker repository
 from src.processor import ProcessOMR
 
 class OMRProcessor:
