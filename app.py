@@ -1,21 +1,18 @@
 import os
 import sys
-import time
 
-# Configure paths
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'OMRChecker'))
+# Add the current directory and the OMRChecker directory to the Python path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+sys.path.insert(0, os.path.join(current_dir, 'OMRChecker'))
 
-# Wait a moment to make sure everything is ready
-print("Starting OMRChecker service...")
-time.sleep(1)
-
-# Import after paths are set
-from OMRChecker.src.processor import ProcessOMR
+# Import the processor - note the changed import path
+from src.processor import ProcessOMR
 
 def main():
     print("OMRChecker service is running!")
     # Your application logic here
+    # For example: processor = ProcessOMR(...)
 
 if __name__ == "__main__":
     main()
