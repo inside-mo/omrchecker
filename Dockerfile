@@ -2,7 +2,7 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-# Install git to clone the repository
+# Install git and required dependencies
 RUN apt-get update && apt-get install -y git && apt-get clean
 
 # Copy requirements first for better caching
