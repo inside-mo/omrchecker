@@ -26,6 +26,7 @@ COPY app.py .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir screeninfo==0.8.1
 
 # Add OMRChecker to Python path
 ENV PYTHONPATH="${PYTHONPATH}:/app/OMRChecker"
