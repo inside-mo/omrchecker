@@ -1,9 +1,7 @@
 FROM python:3.9-slim
 
-# Ensure logs are unbuffered
 ENV PYTHONUNBUFFERED=1
 
-# System dependencies for OMRChecker, pdf2image, and headless display
 RUN apt-get update && apt-get install -y \
     git \
     build-essential \
@@ -23,22 +21,21 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Clone OMRChecker repo (adapt/remove if not needed)
+# If you're cloning the repo:
 RUN git clone https://github.com/Udayraj123/OMRChecker.git /app/OMRChecker
 
-# Patch import bug if necessary (optional, as before)
+# Patch import bug (as before; will silently skip if not needed)
 RUN sed -i 's/from src.logger import logger/from .logger import logger/g' /app/OMRChecker/src/__init__.py || true
 
-# Python dependencies
+# Install all dependencies and pdf2image
 RUN pip install --no-cache-dir -r /app/OMRChecker/requirements.txt \
  && pip install --no-cache-dir "numpy<2.0" "opencv-python-headless==4.6.0.66" flask flask-cors gunicorn pdf2image
 
-# Copy your custom app.py in (if you want to override the repo one)
-COPY app.py /app/OMRChecker/
+# If you want to override the default app.py (uncomment next line)
+# COPY app.py /app/OMRChecker/
 
 WORKDIR /app/OMRChecker
 
 EXPOSE 2014
 
-# Start Gunicorn with unbuffered output via Xvfb for OpenCV/PDF/GUI stuff
 ENTRYPOINT ["xvfb-run", "-a", "-e", "/dev/stdout", "--server-args=-screen 0 1920x1080x16", "gunicorn", "-k", "sync", "--workers", "1", "-b", "0.0.0.0:2014", "app:app", "--access-logfile", "-", "--error-logfile", "-"]
