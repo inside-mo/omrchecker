@@ -25,6 +25,7 @@ RUN pip install --no-cache-dir opencv-python-headless==4.6.0.66
 RUN pip install --no-cache-dir pytz python-dateutil
 RUN pip install --no-cache-dir pandas matplotlib
 RUN pip install --no-cache-dir rich flask pillow PyPDF2
+RUN pip install --no-cache-dir dotmap
 
 # Copy our application files
 COPY app.py /app/OMRChecker/
