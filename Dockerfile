@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone OMRChecker and install it properly
+# Clone and install OMRChecker
 RUN git clone https://github.com/Udayraj123/OMRChecker.git && \
     cd OMRChecker && \
     pip install -e .
@@ -21,9 +21,9 @@ COPY app.py .
 # Install additional dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-WORKDIR /app
+WORKDIR /app/OMRChecker
 
 ENV PORT=2014
 EXPOSE 2014
 
-CMD ["python", "app.py"]
+CMD ["python", "/app/app.py"]
