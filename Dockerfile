@@ -17,7 +17,7 @@ RUN sed -i 's/from src.logger import logger/from .logger import logger/' \
 # ─ 3. Python deps – upstream first, then extras ───────────
 RUN pip install --no-cache-dir -r /app/OMRChecker/requirements.txt \
     && pip install --no-cache-dir \
-       numpy<2.0 opencv-python-headless==4.6.0.66 \
+       numpy\<2.0 opencv-python-headless==4.6.0.66 \
        flask flask-cors \
        python-xlib               # ←★ NEW: enables XRandR enumerator
 
