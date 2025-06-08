@@ -23,12 +23,12 @@ RUN sed -i 's/from src.logger import logger/from .logger import logger/g' /app/O
 RUN pip install --no-cache-dir "numpy<2.0"
 RUN pip install --no-cache-dir opencv-python-headless==4.6.0.66
 
-# Install all dependencies needed by the current version
+# Install all dependencies discovered through our testing
 RUN pip install --no-cache-dir pandas matplotlib
 RUN pip install --no-cache-dir Pillow PyPDF2
 RUN pip install --no-cache-dir pytz python-dateutil
 RUN pip install --no-cache-dir rich flask
-RUN pip install --no-cache-dir jsonschema dotmap deepmerge
+RUN pip install --no-cache-dir jsonschema dotmap deepmerge screeninfo
 
 # Copy our application files
 COPY app.py /app/OMRChecker/
