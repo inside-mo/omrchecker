@@ -7,10 +7,10 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone OMRChecker with all its templates and configs
+# Clone OMRChecker
 RUN git clone https://github.com/Udayraj123/OMRChecker.git && \
     cd OMRChecker && \
-    cp -r template_examples/* .
+    cp -r samples/* .
 
 # Create patched version of interaction.py
 RUN echo 'class InteractionUtils:\n    @staticmethod\n    def get_window_size():\n        return (1920, 1080)  # Default resolution\n' > /app/OMRChecker/src/utils/interaction.py
@@ -22,8 +22,8 @@ COPY app.py .
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Add OMRChecker to Python path
-ENV PYTHONPATH="${PYTHONPATH}:/app/OMRChecker"
+# Set Python path explicitly
+ENV PYTHONPATH=/app/OMRChecker
 
 ENV PORT=2014
 EXPOSE 2014
