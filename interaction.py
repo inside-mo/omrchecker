@@ -1,4 +1,7 @@
-# Running from the root of OMRChecker repository
+import os
+import sys
+
+# Import the processor
 from src.processor import ProcessOMR
 
 class OMRProcessor:
