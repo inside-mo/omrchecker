@@ -1,9 +1,8 @@
 from flask import Flask, request, jsonify
 import os
 from functools import wraps
-import sys
-sys.path.append('./omrchecker')
-from src.core import evaluate_omr
+from OMRChecker.src.core import evaluate_omr
+import tempfile
 
 app = Flask(__name__)
 API_KEY = os.environ.get('API_KEY')
@@ -25,7 +24,26 @@ def process_omr():
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
     
-    # OMRChecker processing logic here
+    file = request.files['file']
+    
+    # Save uploaded file temporarily
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_file:
+        file.save(temp_file.name)
+        try:
+            # Process with OMRChecker
+            results = evaluate_omr(temp_file.name)
+            return jsonify({
+                'success': True,
+                'results': results
+            })
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': str(e)
+            }), 500
+        finally:
+            # Clean up temp file
+            os.unlink(temp_file.name)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=2014)
