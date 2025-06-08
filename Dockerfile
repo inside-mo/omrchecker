@@ -1,29 +1,16 @@
-FROM python:3.10-slim
+FROM python:3.9-slim
 
 WORKDIR /app
 
-# Install git and system dependencies for OpenCV
-RUN apt-get update && apt-get install -y \
-    git \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Clone OMRChecker and copy our files
-RUN git clone https://github.com/Udayraj123/OMRChecker.git
-COPY requirements.txt app.py ./
-
-# Set up required directories
-RUN mkdir -p OMRChecker/inputs OMRChecker/outputs OMRChecker/templates && \
-    cp -r OMRChecker/samples/* OMRChecker/templates/
-
-# Create patched version of interaction.py for headless mode
-RUN echo 'class InteractionUtils:\n    @staticmethod\n    def get_window_size():\n        return (1920, 1080)\n' > OMRChecker/src/utils/interaction.py
-
-# Install dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-ENV PORT=2014
-EXPOSE 2014
+COPY . .
+
+# Add application directory to Python path
+ENV PYTHONPATH="${PYTHONPATH}:/app"
+
+# Expose port 8000 to match Coolify's default
+EXPOSE 8000
 
 CMD ["python", "app.py"]
