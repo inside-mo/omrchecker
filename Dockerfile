@@ -5,20 +5,20 @@ WORKDIR /app
 # Install git and required dependencies
 RUN apt-get update && apt-get install -y git && apt-get clean
 
-# Copy requirements first for better caching
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
 # Clone the original OMRChecker repo
 RUN git clone https://github.com/Udayraj123/OMRChecker.git
 
-# Create a patched version of the problematic file
-RUN sed -i 's/from src.logger import logger/from .logger import logger/g' /app/OMRChecker/src/__init__.py
+# Install all requirements from the original repo
+RUN pip install --no-cache-dir -r /app/OMRChecker/requirements.txt
+RUN pip install --no-cache-dir rich>=10.0.0 flask>=2.0.0
+
+# Create a symbolic link to make the imports work
+RUN ln -s /app/OMRChecker/src /app/src
 
 # Copy your application files
 COPY . .
 
-# Add both the current directory and the OMRChecker directory to PYTHONPATH
+# Set Python path correctly
 ENV PYTHONPATH="${PYTHONPATH}:/app:/app/OMRChecker"
 
 # Expose port 8000 to match Coolify's default
