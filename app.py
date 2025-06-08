@@ -4,7 +4,7 @@ from functools import wraps
 import tempfile
 import sys
 sys.path.append('/app/OMRChecker')
-from src.core import evaluate  # Changed from evaluate_omr to evaluate
+from src.processor import ProcessOMR  # This is the correct import
 
 app = Flask(__name__)
 API_KEY = os.environ.get('API_KEY')
@@ -38,7 +38,8 @@ def process_omr():
         file.save(temp_file.name)
         try:
             # Process with OMRChecker using the selected template
-            results = evaluate(temp_file.name, template_name=template)
+            processor = ProcessOMR()
+            results = processor.process_path(temp_file.name, template)
             return jsonify({
                 'success': True,
                 'results': results
