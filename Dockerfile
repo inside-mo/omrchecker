@@ -9,21 +9,28 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone and install OMRChecker
-RUN git clone https://github.com/Udayraj123/OMRChecker.git && \
-    cd OMRChecker && \
-    pip install -e .
+# Clone OMRChecker
+RUN git clone https://github.com/Udayraj123/OMRChecker.git
+
+# Set up required directories
+WORKDIR /app/OMRChecker
+RUN mkdir -p inputs outputs templates
+
+# Copy sample templates and configs
+RUN cp -r samples/* templates/ && \
+    cp -r samples/samples1/* inputs/
+
+# Create patched version of interaction.py for headless mode
+RUN echo 'class InteractionUtils:\n    @staticmethod\n    def get_window_size():\n        return (1920, 1080)\n' > src/utils/interaction.py
 
 # Copy our API files
-COPY requirements.txt .
-COPY app.py .
+COPY requirements.txt app.py ./
 
-# Install additional dependencies
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-WORKDIR /app/OMRChecker
-
+ENV PYTHONPATH=/app/OMRChecker
 ENV PORT=2014
 EXPOSE 2014
 
-CMD ["python", "/app/app.py"]
+CMD ["python", "app.py"]
