@@ -7,4 +7,5 @@ flask>=2.0.0
 werkzeug>=2.0.0
 PyPDF2>=2.0.0
 rich>=10.0.0
-pdf2image
+pdf2image>=1.16.0
+
