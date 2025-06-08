@@ -3,8 +3,7 @@ import os
 from functools import wraps
 import tempfile
 import sys
-sys.path.append('/app/OMRChecker')
-from src.processor import ProcessOMR  # This is the correct import
+from OMRChecker.src.processor import ProcessOMR  # Full import path
 
 app = Flask(__name__)
 API_KEY = os.environ.get('API_KEY')
@@ -30,7 +29,7 @@ def process_omr():
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
     
-    template = request.form.get('template', 'default')  # Allow template selection
+    template = request.form.get('template', 'default')
     file = request.files['file']
     
     # Save uploaded file temporarily
